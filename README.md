@@ -36,6 +36,12 @@ Run the included random agent example:
 python examples/random_agent.py
 ```
 
+Run a minimal random-agent evaluation:
+
+```bash
+python benchmarks/evaluate_random.py
+```
+
 The environment can also be used directly via the package:
 
 ```python
@@ -53,6 +59,7 @@ The current implementation includes:
 - grid-based coating observation
 - simple reward based on coverage gain and overspray penalty
 - Gymnasium environment registration as `StochPaint-v0`
+- basic evaluation metrics: `coverage_ratio`, `overspray_ratio`, and `uniformity_score`
 
 ## One-Line Summary
 

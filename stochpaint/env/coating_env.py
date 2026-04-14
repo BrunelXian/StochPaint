@@ -7,6 +7,8 @@ import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
 
+from stochpaint.utils.metrics import coverage_ratio, overspray_ratio, uniformity_score
+
 
 @dataclass(frozen=True)
 class BrushConfig:
@@ -94,11 +96,15 @@ class CoatingEnv(gym.Env[np.ndarray, np.ndarray]):
         return self.grid.copy()
 
     def _get_info(self) -> dict[str, Any]:
-        covered_target = np.count_nonzero((self.grid > 0.0) & self.target_mask)
-        target_area = np.count_nonzero(self.target_mask)
+        metrics = {
+            "coverage_ratio": coverage_ratio(self.grid, self.target_mask),
+            "overspray_ratio": overspray_ratio(self.grid, self.target_mask),
+            "uniformity_score": uniformity_score(self.grid, self.target_mask),
+        }
         overspray_cells = np.count_nonzero((self.grid > 0.0) & ~self.target_mask)
         return {
-            "coverage_ratio": covered_target / max(target_area, 1),
+            "metrics": metrics,
+            **metrics,
             "overspray_cells": overspray_cells,
             "steps": self.steps,
         }

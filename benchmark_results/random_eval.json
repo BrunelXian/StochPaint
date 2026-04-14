@@ -1,0 +1,20 @@
+{
+  "env_id": "StochPaint-v0",
+  "episodes": 5,
+  "seed": 42,
+  "timestamp": "2026-04-14T04:59:59.464046+00:00",
+  "aggregated_metrics": {
+    "coverage_ratio": {
+      "mean": 0.6547058823529411,
+      "std": 0.04981086874504888
+    },
+    "overspray_ratio": {
+      "mean": 0.7368977986746612,
+      "std": 0.018313810563072727
+    },
+    "uniformity_score": {
+      "mean": 0.5041889650962794,
+      "std": 0.027437061816962854
+    }
+  }
+}

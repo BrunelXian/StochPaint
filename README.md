@@ -42,6 +42,12 @@ Run a minimal random-agent evaluation:
 python benchmarks/evaluate_random.py
 ```
 
+Run the evaluation and save a JSON result:
+
+```bash
+python benchmarks/evaluate_random.py --episodes 5 --seed 42 --output benchmark_results/random_eval.json
+```
+
 The environment can also be used directly via the package:
 
 ```python

@@ -24,13 +24,18 @@ class CoatingEnv(gym.Env[np.ndarray, np.ndarray]):
         self,
         grid_size: int = 64,
         episode_length: int = 100,
+        target_shape: str = "circle",
         target_radius_ratio: float = 0.28,
+        square_half_extent_ratio: float = 0.22,
         brush_config: BrushConfig | None = None,
         render_mode: str | None = None,
     ) -> None:
         super().__init__()
         self.grid_size = grid_size
         self.episode_length = episode_length
+        self.target_shape = target_shape
+        self.target_radius_ratio = target_radius_ratio
+        self.square_half_extent_ratio = square_half_extent_ratio
         self.render_mode = render_mode
         self.brush = brush_config or BrushConfig()
 
@@ -47,7 +52,7 @@ class CoatingEnv(gym.Env[np.ndarray, np.ndarray]):
             dtype=np.float32,
         )
 
-        self.target_mask = self._build_circle_mask(target_radius_ratio)
+        self.target_mask = self._build_target_mask()
         self.grid = np.zeros((self.grid_size, self.grid_size), dtype=np.float32)
         self.steps = 0
         self.rng = np.random.default_rng()
@@ -58,6 +63,24 @@ class CoatingEnv(gym.Env[np.ndarray, np.ndarray]):
         y_idx, x_idx = np.indices((self.grid_size, self.grid_size), dtype=np.float32)
         distances = np.sqrt((x_idx - center) ** 2 + (y_idx - center) ** 2)
         return distances <= radius
+
+    def _build_square_mask(self, half_extent_ratio: float) -> np.ndarray:
+        center = (self.grid_size - 1) / 2.0
+        half_extent = self.grid_size * half_extent_ratio
+        y_idx, x_idx = np.indices((self.grid_size, self.grid_size), dtype=np.float32)
+        return (np.abs(x_idx - center) <= half_extent) & (
+            np.abs(y_idx - center) <= half_extent
+        )
+
+    def _build_target_mask(self) -> np.ndarray:
+        if self.target_shape == "circle":
+            return self._build_circle_mask(self.target_radius_ratio)
+        if self.target_shape == "square":
+            return self._build_square_mask(self.square_half_extent_ratio)
+        raise ValueError(
+            f"Unsupported target_shape={self.target_shape!r}. "
+            "Expected 'circle' or 'square'."
+        )
 
     def _action_to_grid_position(self, action: np.ndarray) -> np.ndarray:
         clipped = np.clip(action, 0.0, 1.0)
@@ -107,6 +130,7 @@ class CoatingEnv(gym.Env[np.ndarray, np.ndarray]):
             **metrics,
             "overspray_cells": overspray_cells,
             "steps": self.steps,
+            "target_shape": self.target_shape,
         }
 
     def reset(

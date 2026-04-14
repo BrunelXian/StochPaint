@@ -169,6 +169,13 @@ def main() -> None:
         description="Evaluate minimal baseline policies on StochPaint."
     )
     parser.add_argument(
+        "--target-shape",
+        type=str,
+        default="circle",
+        choices=("circle", "square"),
+        help="Target shape to evaluate.",
+    )
+    parser.add_argument(
         "--episodes",
         type=int,
         default=10,
@@ -188,7 +195,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    env = gym.make(ENV_ID)
+    env = gym.make(ENV_ID, target_shape=args.target_shape)
     baseline_results = {
         "random": evaluate_baseline(
             env,
@@ -209,6 +216,7 @@ def main() -> None:
 
     result = {
         "env_id": ENV_ID,
+        "target_shape": args.target_shape,
         "episodes": args.episodes,
         "seed": args.seed,
         "timestamp": datetime.now(timezone.utc).isoformat(),

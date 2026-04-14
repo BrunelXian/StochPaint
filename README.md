@@ -10,7 +10,7 @@
 
 StochPaint is a physically inspired sandbox environment for studying reinforcement learning under stochastic actuation and partial observability.
 
-The current runnable version provides a minimal Gymnasium-compatible coating environment with a stochastic brush, continuous `(x, y)` actions, a 2D coating-grid observation, and a simple random-agent example.
+The current runnable version provides a minimal Gymnasium-compatible coating environment with a stochastic brush, continuous `(x, y)` actions, a 2D coating-grid observation, a simple random-agent example, and two lightweight evaluation baselines.
 
 ## Installation
 
@@ -36,16 +36,16 @@ Run the included random agent example:
 python examples/random_agent.py
 ```
 
-Run a minimal random-agent evaluation:
+Run a minimal baseline evaluation:
 
 ```bash
 python benchmarks/evaluate_random.py
 ```
 
-Run the evaluation and save a JSON result:
+Run the evaluation and save a JSON result for both random and heuristic baselines:
 
 ```bash
-python benchmarks/evaluate_random.py --episodes 5 --seed 42 --output benchmark_results/random_eval.json
+python benchmarks/evaluate_random.py --episodes 5 --seed 42 --output benchmark_results/baseline_eval.json
 ```
 
 The environment can also be used directly via the package:
@@ -66,6 +66,7 @@ The current implementation includes:
 - simple reward based on coverage gain and overspray penalty
 - Gymnasium environment registration as `StochPaint-v0`
 - basic evaluation metrics: `coverage_ratio`, `overspray_ratio`, and `uniformity_score`
+- minimal evaluation baselines for random and heuristic policies
 
 ## One-Line Summary
 

@@ -1,0 +1,49 @@
+{
+  "env_id": "StochPaint-v0",
+  "episodes": 5,
+  "seed": 42,
+  "timestamp": "2026-04-14T05:04:31.853956+00:00",
+  "baselines": {
+    "random": {
+      "baseline": "random",
+      "aggregated_metrics": {
+        "coverage_ratio": {
+          "mean": 0.6333333333333334,
+          "std": 0.07292694358291743
+        },
+        "overspray_ratio": {
+          "mean": 0.7459801801372998,
+          "std": 0.02990743422427173
+        },
+        "uniformity_score": {
+          "mean": 0.5035592749343236,
+          "std": 0.029330711997386752
+        }
+      }
+    },
+    "heuristic": {
+      "baseline": "heuristic",
+      "aggregated_metrics": {
+        "coverage_ratio": {
+          "mean": 0.9513725490196079,
+          "std": 0.00354028825201332
+        },
+        "overspray_ratio": {
+          "mean": 0.04556877250018858,
+          "std": 0.00909537837972408
+        },
+        "uniformity_score": {
+          "mean": 0.6515094695125377,
+          "std": 0.0014321677396103407
+        }
+      }
+    }
+  },
+  "comparison": {
+    "heuristic_minus_random": {
+      "coverage_ratio": 0.31803921568627447,
+      "overspray_ratio": -0.7004114076371113,
+      "uniformity_score": 0.14795019457821412
+    }
+  }
+}

@@ -18,6 +18,7 @@ import stochpaint
 
 ENV_ID = "StochPaint-v0"
 SUPPORTED_TARGET_SHAPES = ("circle", "square")
+SUPPORTED_NOISE_PROFILES = ("low_noise", "high_noise")
 METRIC_KEYS = ("coverage_ratio", "overspray_ratio", "uniformity_score")
 
 
@@ -192,9 +193,11 @@ def build_cross_shape_comparisons(
 
 
 def evaluate_shape(
-    target_shape: str, episodes: int, seed: int | None
+    target_shape: str, noise_profile: str, episodes: int, seed: int | None
 ) -> dict[str, object]:
-    env_factory = lambda: gym.make(ENV_ID, target_shape=target_shape)
+    env_factory = lambda: gym.make(
+        ENV_ID, target_shape=target_shape, noise_profile=noise_profile
+    )
     baseline_results = {
         "random": evaluate_baseline(
             env_factory=env_factory,
@@ -213,6 +216,7 @@ def evaluate_shape(
     }
     return {
         "target_shape": target_shape,
+        "noise_profile": noise_profile,
         "baselines": baseline_results,
         "comparison": build_comparison(baseline_results),
     }
@@ -264,6 +268,13 @@ def main() -> None:
         help="Target shape to evaluate, or 'all' to run every supported shape.",
     )
     parser.add_argument(
+        "--noise-profile",
+        type=str,
+        default="low_noise",
+        choices=SUPPORTED_NOISE_PROFILES,
+        help="Noise profile to evaluate.",
+    )
+    parser.add_argument(
         "--episodes",
         type=int,
         default=10,
@@ -289,7 +300,12 @@ def main() -> None:
         else [args.target_shape]
     )
     per_shape_results = {
-        shape: evaluate_shape(shape, episodes=args.episodes, seed=args.seed)
+        shape: evaluate_shape(
+            shape,
+            noise_profile=args.noise_profile,
+            episodes=args.episodes,
+            seed=args.seed,
+        )
         for shape in target_shapes
     }
     per_baseline_results = build_per_baseline_results(per_shape_results)
@@ -305,11 +321,13 @@ def main() -> None:
             "env_id": ENV_ID,
             "requested_target_shape": args.target_shape,
             "evaluated_target_shapes": target_shapes,
+            "noise_profile": args.noise_profile,
             "episodes": args.episodes,
             "seed": args.seed,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         },
         "supported_target_shapes": list(SUPPORTED_TARGET_SHAPES),
+        "supported_noise_profiles": list(SUPPORTED_NOISE_PROFILES),
         "per_shape_results": per_shape_results,
         "per_baseline_results": per_baseline_results,
         "comparison_summaries": comparison_summaries,

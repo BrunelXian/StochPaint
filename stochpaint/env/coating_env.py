@@ -19,12 +19,17 @@ class BrushConfig:
 
 class CoatingEnv(gym.Env[np.ndarray, np.ndarray]):
     metadata = {"render_modes": ["rgb_array"], "render_fps": 8}
+    NOISE_PROFILES = {
+        "low_noise": BrushConfig(sigma=1.25, particles_per_step=96, overspray_penalty=0.02),
+        "high_noise": BrushConfig(sigma=2.75, particles_per_step=96, overspray_penalty=0.02),
+    }
 
     def __init__(
         self,
         grid_size: int = 64,
         episode_length: int = 100,
         target_shape: str = "circle",
+        noise_profile: str = "low_noise",
         target_radius_ratio: float = 0.28,
         square_half_extent_ratio: float = 0.22,
         brush_config: BrushConfig | None = None,
@@ -34,10 +39,11 @@ class CoatingEnv(gym.Env[np.ndarray, np.ndarray]):
         self.grid_size = grid_size
         self.episode_length = episode_length
         self.target_shape = target_shape
+        self.noise_profile = noise_profile
         self.target_radius_ratio = target_radius_ratio
         self.square_half_extent_ratio = square_half_extent_ratio
         self.render_mode = render_mode
-        self.brush = brush_config or BrushConfig()
+        self.brush = brush_config or self._resolve_brush_config(noise_profile)
 
         self.action_space = spaces.Box(
             low=0.0,
@@ -56,6 +62,15 @@ class CoatingEnv(gym.Env[np.ndarray, np.ndarray]):
         self.grid = np.zeros((self.grid_size, self.grid_size), dtype=np.float32)
         self.steps = 0
         self.rng = np.random.default_rng()
+
+    def _resolve_brush_config(self, noise_profile: str) -> BrushConfig:
+        if noise_profile not in self.NOISE_PROFILES:
+            supported = ", ".join(sorted(self.NOISE_PROFILES))
+            raise ValueError(
+                f"Unsupported noise_profile={noise_profile!r}. "
+                f"Expected one of: {supported}."
+            )
+        return self.NOISE_PROFILES[noise_profile]
 
     def _build_circle_mask(self, radius_ratio: float) -> np.ndarray:
         center = (self.grid_size - 1) / 2.0
@@ -131,6 +146,7 @@ class CoatingEnv(gym.Env[np.ndarray, np.ndarray]):
             "overspray_cells": overspray_cells,
             "steps": self.steps,
             "target_shape": self.target_shape,
+            "noise_profile": self.noise_profile,
         }
 
     def reset(

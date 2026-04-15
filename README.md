@@ -10,7 +10,7 @@
 
 StochPaint is a physically inspired sandbox environment for studying reinforcement learning under stochastic actuation and partial observability.
 
-The current runnable version provides a minimal Gymnasium-compatible coating environment with a stochastic brush, continuous `(x, y)` actions, a 2D coating-grid observation, a simple random-agent example, and two lightweight evaluation baselines.
+The current runnable version provides a minimal Gymnasium-compatible coating environment with a stochastic brush, continuous `(x, y)` actions, a 2D coating-grid observation, a simple random-agent example, two lightweight hand-built baselines, and a first PPO training baseline.
 
 ## Installation
 
@@ -48,6 +48,18 @@ Run the evaluation and save a JSON result for both random and heuristic baseline
 python benchmarks/evaluate_random.py --episodes 5 --seed 42 --output benchmark_results/baseline_eval.json
 ```
 
+Train a PPO baseline:
+
+```bash
+python examples/train_ppo.py --target-shape circle --noise-profile low_noise --timesteps 5000 --seed 42
+```
+
+Evaluate random, heuristic, and PPO together:
+
+```bash
+python benchmarks/evaluate_random.py --target-shape circle --noise-profile low_noise --episodes 5 --seed 42 --ppo-model models/ppo_circle_low_noise_seed42 --output benchmark_results/ppo_eval.json
+```
+
 The environment can also be used directly via the package:
 
 ```python
@@ -66,7 +78,7 @@ The current implementation includes:
 - simple reward based on coverage gain and overspray penalty
 - Gymnasium environment registration as `StochPaint-v0`
 - basic evaluation metrics: `coverage_ratio`, `overspray_ratio`, and `uniformity_score`
-- minimal evaluation baselines for random and heuristic policies
+- minimal evaluation baselines for random, heuristic, and PPO policies
 
 ## One-Line Summary
 

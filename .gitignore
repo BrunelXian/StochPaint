@@ -1,3 +1,5 @@
 __pycache__/
 *.pyc
 random_agent_result.png
+models/
+benchmark_results/ppo_*.json

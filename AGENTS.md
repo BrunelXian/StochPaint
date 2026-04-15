@@ -2,7 +2,9 @@
 
 ## Project Stage
 
-StochPaint is currently a minimal runnable Gymnasium environment. It is not yet a full benchmark suite.
+StochPaint is currently a minimal runnable benchmark prototype built on Gymnasium.
+It includes target-shape variants, noise-profile variants, lightweight random and heuristic baselines, and an initial PPO training/evaluation path.
+It is not yet a full benchmark suite.
 
 ## Working Style
 
@@ -24,6 +26,7 @@ After each meaningful task, validate at least the following:
 - `gym.make("StochPaint-v0")` works
 - `reset()` and `step()` run without errors
 - `python examples/random_agent.py` runs successfully
+- if PPO-related code changed, `python examples/train_ppo.py` and `python benchmarks/evaluate_random.py --ppo-model ...` must still work
 
 ## Documentation Rules
 
@@ -35,3 +38,10 @@ After each meaningful task, validate at least the following:
 
 - Prefer minimal dependencies.
 - Do not add new packages unless they are clearly necessary for the requested task.
+
+## Local Machine Path Rules
+
+- Keep project source code under `D:\Projects`.
+- Place Python environments, models, datasets, and caches under `D:\XianLab`.
+- Do not default large dependencies or caches to `C:\`.
+- Before creating any new environment, propose the target path layout first, then execute.

@@ -134,17 +134,53 @@ def evaluate_baseline(
 def build_comparison(
     baseline_results: dict[str, dict[str, object]]
 ) -> dict[str, dict[str, float]]:
-    if "random" not in baseline_results or "heuristic" not in baseline_results:
-        return {}
+    comparisons: dict[str, dict[str, float]] = {}
 
-    random_metrics = baseline_results["random"]["aggregated_metrics"]
-    heuristic_metrics = baseline_results["heuristic"]["aggregated_metrics"]
-    return {
-        "heuristic_minus_random": {
+    if "random" in baseline_results and "heuristic" in baseline_results:
+        random_metrics = baseline_results["random"]["aggregated_metrics"]
+        heuristic_metrics = baseline_results["heuristic"]["aggregated_metrics"]
+        comparisons["heuristic_minus_random"] = {
             key: float(heuristic_metrics[key]["mean"] - random_metrics[key]["mean"])
             for key in METRIC_KEYS
         }
-    }
+
+    if "random" in baseline_results and "ppo" in baseline_results:
+        random_metrics = baseline_results["random"]["aggregated_metrics"]
+        ppo_metrics = baseline_results["ppo"]["aggregated_metrics"]
+        comparisons["ppo_minus_random"] = {
+            key: float(ppo_metrics[key]["mean"] - random_metrics[key]["mean"])
+            for key in METRIC_KEYS
+        }
+
+    if "heuristic" in baseline_results and "ppo" in baseline_results:
+        heuristic_metrics = baseline_results["heuristic"]["aggregated_metrics"]
+        ppo_metrics = baseline_results["ppo"]["aggregated_metrics"]
+        comparisons["ppo_minus_heuristic"] = {
+            key: float(ppo_metrics[key]["mean"] - heuristic_metrics[key]["mean"])
+            for key in METRIC_KEYS
+        }
+
+    return comparisons
+
+
+def make_ppo_policy_factory(model_path: str) -> Callable[[gym.Env], PolicyFn]:
+    def policy_factory(env: gym.Env) -> PolicyFn:
+        from stable_baselines3 import PPO
+
+        model = PPO.load(model_path, env=env)
+
+        def policy(
+            env: gym.Env,
+            observation: np.ndarray,
+            info: dict[str, float],
+            step_index: int,
+        ) -> np.ndarray:
+            action, _ = model.predict(observation, deterministic=True)
+            return np.asarray(action, dtype=np.float32)
+
+        return policy
+
+    return policy_factory
 
 
 def build_per_baseline_results(
@@ -193,7 +229,11 @@ def build_cross_shape_comparisons(
 
 
 def evaluate_shape(
-    target_shape: str, noise_profile: str, episodes: int, seed: int | None
+    target_shape: str,
+    noise_profile: str,
+    episodes: int,
+    seed: int | None,
+    ppo_model_path: str | None = None,
 ) -> dict[str, object]:
     env_factory = lambda: gym.make(
         ENV_ID, target_shape=target_shape, noise_profile=noise_profile
@@ -214,6 +254,14 @@ def evaluate_shape(
             seed=seed,
         ),
     }
+    if ppo_model_path:
+        baseline_results["ppo"] = evaluate_baseline(
+            env_factory=env_factory,
+            baseline_name="ppo",
+            policy_factory=make_ppo_policy_factory(ppo_model_path),
+            episodes=episodes,
+            seed=seed,
+        )
     return {
         "target_shape": target_shape,
         "noise_profile": noise_profile,
@@ -233,7 +281,10 @@ def print_summary(
 
     for shape, shape_result in per_shape_results.items():
         print(f"\n[{shape}]")
-        for baseline_name in ("random", "heuristic"):
+        baseline_order = [
+            name for name in ("random", "heuristic", "ppo") if name in shape_result["baselines"]
+        ]
+        for baseline_name in baseline_order:
             aggregated_metrics = shape_result["baselines"][baseline_name]["aggregated_metrics"]
             coverage = aggregated_metrics["coverage_ratio"]["mean"]
             overspray = aggregated_metrics["overspray_ratio"]["mean"]
@@ -246,10 +297,12 @@ def print_summary(
             )
 
         comparison = shape_result["comparison"]
-        if comparison:
-            delta = comparison["heuristic_minus_random"]
+        for label in ("heuristic_minus_random", "ppo_minus_random", "ppo_minus_heuristic"):
+            if label not in comparison:
+                continue
+            delta = comparison[label]
             print(
-                "delta(heuristic-random): "
+                f"delta({label}): "
                 f"coverage={delta['coverage_ratio']:+.4f}, "
                 f"overspray={delta['overspray_ratio']:+.4f}, "
                 f"uniformity={delta['uniformity_score']:+.4f}"
@@ -292,6 +345,12 @@ def main() -> None:
         default=None,
         help="Optional JSON output path for saving aggregated results.",
     )
+    parser.add_argument(
+        "--ppo-model",
+        type=str,
+        default=None,
+        help="Optional path to a trained PPO model to include in evaluation.",
+    )
     args = parser.parse_args()
 
     target_shapes = (
@@ -305,6 +364,7 @@ def main() -> None:
             noise_profile=args.noise_profile,
             episodes=args.episodes,
             seed=args.seed,
+            ppo_model_path=args.ppo_model,
         )
         for shape in target_shapes
     }
@@ -324,6 +384,7 @@ def main() -> None:
             "noise_profile": args.noise_profile,
             "episodes": args.episodes,
             "seed": args.seed,
+            "ppo_model": args.ppo_model,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         },
         "supported_target_shapes": list(SUPPORTED_TARGET_SHAPES),
